@@ -1,0 +1,117 @@
+generator client {
+  provider = "prisma-client-js"
+}
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  image     String?
+  createdAt DateTime @default(now())
+  accounts  Account[]
+  sessions  Session[]
+  leads     Lead[]
+  brands    Brand[]
+}
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type              String
+  provider          String
+  providerAccountId String
+  access_token      String?
+  token_type        String?
+  scope             String?
+  refresh_token     String?
+  expires_at        Int?
+  id_token          String?
+  session_state     String?
+  @@unique([provider, providerAccountId])
+}
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expires      DateTime
+}
+model Lead {
+  id        String   @id @default(cuid())
+  brandId   String?
+  brand     Brand?   @relation(fields: [brandId], references: [id])
+  contactName String?
+  contactEmail String?
+  website   String?
+  country   String?
+  niche     String?
+  budgetEstimate Int?
+  affinityScore Int?  
+  status    LeadStatus @default(TO_CONTACT)
+  notes     String?
+  createdAt DateTime @default(now())
+  ownerId   String?
+  owner     User?    @relation(fields: [ownerId], references: [id])
+}
+model Brand {
+  id        String   @id @default(cuid())
+  name      String
+  instagram String?
+  tiktok    String?
+  website   String?
+  country   String?
+  leads     Lead[]
+  proposals Proposal[]
+  createdAt DateTime @default(now())
+}
+model Influencer {
+  id        String   @id @default(cuid())
+  handle    String
+  platform  String
+  followers Int?
+  avgViews  Int?
+  country   String?
+  vertical  String?
+  priceStory Int?
+  pricePost Int?
+  priceVideo Int?
+  notes     String?
+  createdAt DateTime @default(now())
+}
+model Proposal {
+  id         String   @id @default(cuid())
+  brandId    String
+  brand      Brand    @relation(fields: [brandId], references: [id])
+  influencerId String
+  influencer Influencer @relation(fields: [influencerId], references: [id])
+  title      String
+  status     ProposalStatus @default(SENT)
+  budget     Int?
+  createdAt  DateTime @default(now())
+}
+model Job {
+  id        String   @id @default(cuid())
+  type      String
+  payload   Json
+  status    String   @default("queued")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+enum LeadStatus {
+  TO_CONTACT
+  CONTACTED
+  REPLIED
+  QUALIFIED
+  WON
+  LOST
+}
+enum ProposalStatus {
+  DRAFT
+  SENT
+  NEGOTIATION
+  APPROVED
+  REJECTED
+}
